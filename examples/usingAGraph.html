@@ -1,0 +1,30 @@
+<html> 
+    <head>
+        <script type="text/javascript" src="../AGraph.js"></script> 
+    </head>
+<body> 
+    <div id="text"></div>
+    <script type="text/javascript" language="javascript">  
+        var g = new AG.AGraph(id_key="_id", src_key="_src", dst_key="_dst");
+        console.log("\t--Building the following Graph Struccture--");
+        console.log("\t 1->2->3");
+        console.log("\t    |   ");
+        console.log("\t    `->4"); 
+
+        g.addVtx("1",{name:"one"});
+        g.addVtx("2",{name:"two"});
+        g.addVtx("3",{name:"three"});
+        g.addVtx("4",{name:"four"});
+         
+        g.addEdge("1-2","1","2",{type:"da"});   
+        g.addEdge("2-3","2","3",{type:"da"});   
+        g.addEdge("2-4","2","4",{type:"da"});   
+
+        console.log("\n\n\t--Print out the Graph --");
+
+        let str = JSON.stringify(g);
+        console.log(str);
+        document.getElementById("text").innerHTML = str;
+    </script>
+</body>
+</html>
