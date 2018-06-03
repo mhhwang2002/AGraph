@@ -457,7 +457,8 @@ AG.AGraph = function(id_key, src_key, dst_key) {
     }
 } // end of AG.Graph 
 
-module.exports.AGraph = AG.AGraph; //  
+if(typeof module != 'undefined')
+    module.exports.AGraph = AG.AGraph; //   
 
 if (typeof window === 'undefined') {
     if (require.main === module) {// runing this file using node.js  
