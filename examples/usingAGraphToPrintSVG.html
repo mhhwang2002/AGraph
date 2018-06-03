@@ -1,0 +1,40 @@
+<html> 
+    <head>
+        <script type="text/javascript" src="../AGraph.js">
+        
+        </script> 
+    </head>
+<body> 
+    <div id="output"> </div>
+    <script>
+       function getTagAndAttributeStr(obj)
+        {
+            let str = obj.tag + " "; // write tage first!
+            for(let key in obj) {
+                if (key == "tag") // skip the tag
+                    continue;
+                else // write attributes
+                    str += key + '="'+obj[key] + '" ' ;
+            }
+            return str;
+        }
+        function render(svg_attr, g)
+        {
+            let innerhtml = '<'+ getTagAndAttributeStr(svg_attr)+'>';   // open a svg tag and its attribute 
+            for( let id in g.VE) {
+                let elem = g.getEntity(id);
+                innerhtml += '<' + getTagAndAttributeStr(elem) + '/>'  
+            }
+            innerhtml += '</svg>';                                      // close the svg tag
+            return innerhtml;
+        }
+        
+        var g = new AG.AGraph("id", "__src", "__dst"); 
+        g.addVtx("2", {tag:"rect", width:"300", height:"100", style:"fill:rgb(0,0,255);stroke-width:3;stroke:rgb(0,0,0)"});
+        g.addVtx("3", {tag:"circle", cx:"50", cy:"50", r:"40", stroke:"black", "stroke-width":"3", fill:"red"}); 
+        //document.getElementById("output").innerHTML = JSON.stringify(g);
+        let svg_attr={tag:"svg", width:700, height:500, onmousedown:"sgv_onmousedown(e)"};
+        document.getElementById("output").innerHTML = render(svg_attr, g);
+    </script>
+</body>
+</html>
