@@ -1,7 +1,8 @@
 {
   "name": "agraph",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Attributed Graph Library",
+  "version_description_1.0.1": "More tests are included.",
   "main": "agraph.js",
   "scripts": {
     "test": "mocha || true"
