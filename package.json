@@ -1,8 +1,8 @@
 {
   "name": "agraph",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "An Attributed Graph",
-  "version_description_1.0.1": "More tests are included.",
+  "version_description_2.1.0": "input can be either one of an ID or an entity",
   "main": "agraph.js",
   "scripts": {
     "test": "mocha || true"

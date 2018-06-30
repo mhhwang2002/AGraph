@@ -28,12 +28,9 @@ console.log("\n\n\t--Print out the Graph --");
 console.log(JSON.stringify(g));
 
 console.log("\n\n\t--check some Graph's APIs --");
-console.log("* getOutgoingVtxIDs(1)="+JSON.stringify(g.getOutgoingVtxIDs("1")));
-console.log("* getOutgoingEdgeIDs(1)="+JSON.stringify(g.getOutgoingEdgeIDs("1")));
-console.log("* getTOutgoingEdgeIDs(1)="+JSON.stringify(g.getTOutgoingEdgeIDs("1")));
-console.log("* getIncomingVtxIDs(3)="+JSON.stringify(g.getIncomingVtxIDs("3")));
-console.log("* getIncomingEdgeIDs(3)="+JSON.stringify(g.getIncomingEdgeIDs("3")));
-console.log("* getTIncomingEdgeIDs(3)="+JSON.stringify(g.getTIncomingEdgeIDs("3")));
-console.log("* getIncomingVtxIDs(4)="+JSON.stringify(g.getIncomingVtxIDs("4")));
-console.log("* getIncomingEdgeIDs(4)="+JSON.stringify(g.getIncomingEdgeIDs("4")));
-console.log("* getTIncomingEdgeIDs(4)="+JSON.stringify(g.getTIncomingEdgeIDs("4")));
+console.log("* getOutgoingVtxs(1)="+JSON.stringify(g.getOutgoingEdgeDestinations("1")));
+console.log("* getOutgoingEdges(1)="+JSON.stringify(g.getOutgoingEdges("1"))); 
+console.log("* getIncomingVtxs(3)="+JSON.stringify(g.getIncomingEdgeSources("3")));
+console.log("* getIncomingEdges(3)="+JSON.stringify(g.getIncomingEdges("3"))); 
+console.log("* getIncomingVtxs(4)="+JSON.stringify(g.getIncomingEdgeSources("4")));
+console.log("* getIncomingEdges(4)="+JSON.stringify(g.getIncomingEdges("4"))); 

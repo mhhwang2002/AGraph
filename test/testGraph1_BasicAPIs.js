@@ -16,12 +16,20 @@ describe('Test1', function(){
     g.addEdge("2-3","2","3",{type:"db"});   
     g.addEdge("2-4","2","4",{type:"da"});
 
+   
 	it('ID "1" is a vertex.', function() {
-		assert.equal(g.isVtxID("1"), true);
+		assert.equal(g.isVtx("1"), true);
 	})
 	it('ID "1" is NOT an edge.', function() {
-		assert.equal(g.isEdgeID("1"), false);
+		assert.equal(g.isEdge("1"), false);
 	})
+    it('vetex whose ID "1" has ID "1".', function() { 
+		assert.equal(g.ID("1"), "1");
+	})
+    it('vetex whose ID "1" has ID "1".', function() { 
+		assert.equal(g.isVtx("1"), true);
+	})
+
 	it('The entity of ID "1" has name "one".', function() {
 		//console.log(g.getEntity("1"));
 		assert.equal(g.getEntity("1").name, "one");
@@ -35,10 +43,10 @@ describe('Test1', function(){
 	})
 	it('No of vertices are 4.', function() {
 		//console.log("g.getVtxIDs().length",g.getVtxIDs().length);
-		assert.equal(g.getVtxIDs().length,4);
+		assert.equal(g.getVtxs().length,4);
 	})
 	it('{vertex id: whose name contains "t"}={"2","3"}', function() {
-		let V = g.getVtxIDs(function(entity) { return entity.name.indexOf("t")>=0; } );
+		let V = g.IDs(g.getVtxs(function(entity) { return entity.name.indexOf("t")>=0; } ));
 		console.log(V); 
 		assert( V.indexOf("2")>=0 );
 		assert( V.indexOf("3")>=0 );
@@ -47,83 +55,59 @@ describe('Test1', function(){
 	})
 	it('ID "1-2" is an edge.', function() {
 		//console.log("g.getEdges().length",g.getEdges().length);
-		assert(g.isEdgeID("1-2"));
+		assert(g.isEdge("1-2"));
 	})
 
 	it('No of edges are 4.', function() {
 		//console.log("g.getEdges().length",g.getEdges().length);
-		assert.equal(g.getEdgeIDs().length,3);
+		assert.equal(g.getEdges().length,3);
 	})
 	it('{edge id: whose entity has type = "da"} = {"1-2", "2-4"}.', function() {
 		//console.log("g.getEdges().length",g.getEdges().length);
-		let E = g.getEdgeIDs(function(entity){return entity.type == "da"} )
+		let E = g.IDs(g.getEdges(function(entity){return entity.type == "da"} ));
 		console.log(E); 
 		assert( E.indexOf("1-2")>=0 );
 		assert( E.indexOf("2-4")>=0 );
 		assert( E.indexOf("2-3")< 0 ); 
 	})
 	it('Destination ID of edge "1-2" is "2".', function() {
-		assert(g.getEdgeDestinationID("1-2")=="2");
+		assert(g.ID(g.getEdgeDestination("1-2"))=="2");
 	})
 	it('Source ID of edge "1-2" is "1".', function() {
-		assert(g.getEdgeSourceID("1-2")=="1");
+		assert(g.ID(g.getEdgeSource("1-2"))=="1");
 	})
-	it('getOutgoingVtxIDs("1") contains "2".', function() {
-		let outV = g.getOutgoingVtxIDs("1");
+	it('getOutgoingEdgeDestinations("1") contains "2".', function() {
+		let outV = g.IDs(g.getOutgoingEdgeDestinations("1"));
 		//console.log(outV);
 		assert.equal(outV.indexOf("2"), 0);
 	})
-
-	it('getOutgoingVtxIDs("2") contains "3" and "4".', function() {
-		let outV = g.getOutgoingVtxIDs("2");
+    it('getIncomingEdgeSources("2") contains "1".', function() {
+		let inV = g.IDs(g.getIncomingEdgeSources("2"));
+		//console.log(outV);
+		assert.equal(inV.indexOf("1"), 0);
+	})
+	it('getOutgoingEdgeDestinations("2") contains "3" and "4".', function() {
+		let outV = g.IDs(g.getOutgoingEdgeDestinations("2"));
 		//console.log(outV);
 		assert(outV.indexOf("3")>=0);
 		assert(outV.indexOf("4")>=0);
 	})
-	it('getEdgeDestinationID(getIncomingEdgeIDs(id)[0]) is id.', function() {
+	it('ID(getEdgeDestination(getIncomingEdges(id)[0])) is id.', function() {
 		let vid="2"
-		let inE = g.getIncomingEdgeIDs(vid);
+		let inE = g.getIncomingEdges(vid);
 		//console.log(outV);
-		assert(g.getEdgeDestinationID(inE[0]) == vid); 
+		assert(g.ID(g.getEdgeDestination(inE[0])) == vid); 
 	})
-	it('getEdgeSourceID(outE(id)[0]) is id.', function() {
+	it('ID(getEdgeSource(getOutgoingEdges(id)[0])) is id.', function() {
 		let vid="2"
-		let outE = g.getOutgoingEdgeIDs(vid);
+		let outE = g.getOutgoingEdges(vid);
 		//console.log(outV);
-		assert(g.getEdgeSourceID(outE[0]) == vid); 
-	})
-	it('getTOutgoingVtxIDs("1") contains "2", "3", "4".', function() {
-		let outV = g.getTOutgoingVtxIDs("1");
-		console.log(outV);
-		assert( outV.indexOf("2")>=0 );
-		assert( outV.indexOf("3")>=0 );
-		assert( outV.indexOf("4")>=0 );
-	})
-	it('getTIncomingVtxIDs("4") contains "1", "2", but not "3".', function() {
-		let inV = g.getTIncomingVtxIDs("4");
-		console.log(inV); 
-		assert( inV.indexOf("1")>=0 );
-		assert( inV.indexOf("2")>=0 );
-		assert( inV.indexOf("3")< 0 );
-	})
-	it('getTOutgoingEdgeIDs("1") contains "1-2", "2-3", "3-4".', function() {
-		let outE = g.getTOutgoingEdgeIDs("1");
-		console.log(outE); 
-		assert( outE.indexOf("1-2")>=0 );
-		assert( outE.indexOf("2-3")>=0 );
-		assert( outE.indexOf("2-4")>=0 );
-	})
-	it('getTIncomingEdgeIDs("4") contains "1-2", "3-4", but not "2-3".', function() {
-		let inE = g.getTIncomingEdgeIDs("4");
-		console.log(inE); 
-		assert( inE.indexOf("1-2")>=0 );
-		assert( inE.indexOf("2-4")>=0 );
-		assert( inE.indexOf("2-3")< 0 );
-	})
+		assert(g.ID(g.getEdgeSource(outE[0])) == vid); 
+	}) 
 	
 	it('removeEntity("1-2") removes edge "1-2"', function() {
 		g.removeEntity("1-2");
-		let E = g.getEdgeIDs();
+		let E = g.IDs(g.getEdges());
 		console.log(E); 
 		assert( E.indexOf("1-2")<0 );
 		assert( E.indexOf("2-4")>=0 );
@@ -134,9 +118,9 @@ describe('Test1', function(){
 	
 	it('removeEntity("2", true) removes the vetex "2" as well as all edges connecting to "2" ', function() {
 		g.removeEntity("2", true);
-		let V = g.getVtxIDs();
+		let V = g.IDs(g.getVtxs());
 		console.log(V); 
-		let E = g.getEdgeIDs();
+		let E = g.IDs(g.getEdges());
 		console.log(E); 
 		assert( E.length == 0 ); 
         assert( V.indexOf("1")>= 0 ); 

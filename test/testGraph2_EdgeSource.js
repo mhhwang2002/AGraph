@@ -16,21 +16,21 @@ describe('Test2', function(){
 
 	it('ID "1-2-3" is an edge.', function() {
 		//console.log("g.getEdges().length",g.getEdges().length);
-		assert(g.isEdgeID("1-2"));
+		assert(g.isEdge("1-2"));
 	})
 
 	it('No of edges are 2.', function() {
 		//console.log("g.getEdges().length",g.getEdges().length);
-		assert(g.getEdgeIDs().length == 2);
+		assert(g.getEdges().length == 2);
 	})
  
 	it('Destination of edge "1-2-3" is "3".', function() {
-		assert(g.getEdgeDestinationID("1-2-3")==3);
+		assert(g.ID(g.getEdgeDestination("1-2-3"))==3);
 	})
 	it('Source of edge "1-2-3" is "1-2".', function() {
-		assert(g.getEdgeSourceID("1-2-3")=="1-2");
+		assert(g.ID(g.getEdgeSource("1-2-3"))=="1-2");
 	})
     it('Source of edge "1-2-3" is an edge.', function() {
-		assert(g.isEdgeID(g.getEdgeSourceID("1-2-3")));
+		assert(g.isEdge(g.getEdgeSource("1-2-3")));
 	}) 
 });
