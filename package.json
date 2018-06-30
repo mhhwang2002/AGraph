@@ -1,6 +1,6 @@
 {
   "name": "agraph",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "An Attributed Graph",
   "version_description_1.0.1": "More tests are included.",
   "main": "agraph.js",
