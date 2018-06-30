@@ -5,6 +5,7 @@
   Modification History 
      Jan/7/2017: create
      May/12/2018: begin to make it npm a module
+     Jun/16/2018: version 2.0. explicitly specifying IDs and Entities
 */ 
 
 var AG = AG || { VERSION:1 }
@@ -24,30 +25,46 @@ AG.AGraph = function(id_key, src_key, dst_key) {
     this.BE={}; // BE[dst]={eid}: backward edges ending to dst s.t. E[eid].S_dst = dst for eid in BE[dst] ;  
     
     /**
-     * check if the entity of id is a vertex 
-     * @param {string} id - an entity id searching for    
-     * @return {boolean} true if the entity of id is a vertex; false otherwise.
+     * check if an id is a vertex id 
+     * @param id  - identifier
+     * @return {boolean} true if the input id is for a vertex; false otherwise.
     */
-    this.isVtx = function(id) {
+    this.isVtxID = function(id) {
         var ent = this.getEntity(id);
         if(ent) 
             return !((this.S_src in ent) && (this.S_dst in ent));
         else
             throw new Error(id + " doesn't exists.");
     }
-
     /**
-     * check if tht entity of id is an edge.
-     * @return {boolean} true if the entity of id is an edge; false otherwise.
+     * check if an entity is a vertex in VE
+     * @param ent  - an entity  
+     * @return {boolean} true if the input is a vertex; false otherwise.
     */
-    this.isEdge = function(id) {
-        var ent = this.getEntity(id);
-        if(ent)
-            return (this.S_src in ent) && (this.S_dst in ent);
+    this.isVtxEntity = function(ent) { 
+        if(this.S_id in ent && ent[S_id] in this.VE) 
+            return !((this.S_src in ent) && (this.S_dst in ent));
         else
-            throw new Error(id + " doesn't exists.");
+            throw new Error(ent + " doesn't exists.");
+    }
+    
+    /**
+     * check if an input is is an edge.
+     * @param id  - identifier
+     * @return {boolean} true if the input id is not for a vertex; false otherwise.
+    */
+    this.isEdgeID = function(id) { 
+        return ! this.isVtxID(id); 
     }
 
+ 	/**
+     * check if an entity is an edge in VE
+     * @param ent  - an entity  
+     * @return {boolean} true if the input is not an vertex; false otherwise.
+    */
+    this.isEdgeEntity = function(ent) { 
+       return ! this.isVtxEngity(ent.id); 
+    }
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////// Section 1. Vertex & Edge commonly related Methods ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
@@ -62,7 +79,32 @@ AG.AGraph = function(id_key, src_key, dst_key) {
         else
             return null;
     }
-
+	/**
+     * get a set of entities  
+     * @param {Array} idArray - array of vertex or edge ids searching for 
+     * @return the entity s.t. VE[this.S_id] = id if exists, null if not. 
+     */
+    this.getEntities= function(idArray) {
+    	let answer=[]
+        for(let ii in idArray)
+        	answer.push(this.getEntity(idArray[ii]));
+        return answer;
+    }
+     /**
+     * get all entities satisfied by an checker.
+     * @param {function} achecker - an edge checker for vertex selection 
+     * @return a set of entities in VE. 
+     */
+    this.getEntitiesByChecker = function(achecker) { 
+        let entities = [];
+        for (let id in this.VE) {
+        	if(!achecker || achecker(this.getEntity(id))) {
+        		entities.push(this.getEntitiy(id));
+        	} 
+        }
+        return entities;
+    }
+    
     /**
      * get an entity attribute value.
      * @param {string} id - an entity id searching for    
@@ -95,14 +137,14 @@ AG.AGraph = function(id_key, src_key, dst_key) {
     this.removeEntity = function(id, remove_linked_edges) {
         if(id in this.VE) { 
             if(remove_linked_edges) {   
-                var inE = this.inE(id, null);
-                //console.log("deleting all inE(" + id +")\n"+ graphWriter.Eids2str(inE, this, null)); 
-                var outE = this.outE(id, null);
-                //console.log("deleting all outE(" + id +")\n"+ graphWriter.Eids2str(outE, this, null));
-                for(var ii in inE)
-                    delete this.VE[inE[ii]] 
-                for(var ii in outE)
-                    delete this.VE[outE[ii]] 
+                var getIncomingEdgeIDs = this.getIncomingEdgeIDs(id);
+                //console.log("deleting all getIncomingEdgeIDs(" + id +")\n"+ graphWriter.Eids2str(getIncomingEdgeIDs, this, null)); 
+                var getOutgoingEdgeIDs = this.getOutgoingEdgeIDs(id);
+                //console.log("deleting all getOutgoingEdgeIDs(" + id +")\n"+ graphWriter.Eids2str(getOutgoingEdgeIDs, this, null));
+                for(var ii in getIncomingEdgeIDs)
+                    delete this.VE[getIncomingEdgeIDs[ii]] 
+                for(var ii in getOutgoingEdgeIDs)
+                    delete this.VE[getOutgoingEdgeIDs[ii]] 
 
                 delete this.FE[id];
                 delete this.BE[id];
@@ -123,14 +165,14 @@ AG.AGraph = function(id_key, src_key, dst_key) {
      * @return an object - the vertex attribute contain attributes: this.S_id:id.
      */
     this.addVtx = function(id, attrs) { 
-        var attributes={};
+        var entity={};
         for(var k in attrs) 
-            attributes[k]=attrs[k];
-        if(!(this.S_id in attributes)) // if S_id is not defined in attrs 
-            attributes[this.S_id]=id; // add S_id as id
+            entity[k]=attrs[k];
+        if(!(this.S_id in entity)) // if S_id is not defined in attrs 
+            entity[this.S_id]=id; // add S_id as id
 
-        this.VE[id]= attributes; 
-        return attributes;
+        this.VE[id]= entity; 
+        return entity;
     } 
      
     /**
@@ -138,19 +180,24 @@ AG.AGraph = function(id_key, src_key, dst_key) {
      * @param {function} achecker takes an entity
      * @return a set of vertex ids. 
      */
-    this.getVtxs = function(achecker) {
+    this.getVtxIDs = function(achecker) {
         var result = [];
         for(id in this.VE) { 
-            if(this.isVtx(id)) {
-                if(achecker != null) {   
-                    if(achecker(this.VE[id]))
-                      result.push(id); 
-                }
-                else
-                    result.push(id);
+            if(this.isVtxID(id)) {
+                if(!achecker || achecker(this.VE[id]))
+                	result.push(id);  
             } 
         }
         return result;
+    }
+
+    /**
+     * get all vertice satisfied by an checker.
+     * @param {function} achecker takes an entity
+     * @return a set of vertex ids. 
+     */
+    this.getVtxEntities = function(achecker) {
+    	return this.getEntities(this.getVtxIDs(achecker));
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////// End of Vertex-related Methods //////////////////////////////////////////
@@ -204,60 +251,66 @@ AG.AGraph = function(id_key, src_key, dst_key) {
     }
 
      /**
-     * get all edges satisfied by an checker.
+     * get all edge IDs satisfied by an checker.
      * @param {function} achecker - an edge checker for vertex selection 
      * @return a set of edges ids. 
      */
-    this.getEdges = function(achecker) {
+    this.getEdgeIDs = function(achecker) {
         var result = [];
         for(id in this.VE) { 
-            if(this.isEdge(id)) {
-                if(achecker != null) {   
-                    if(achecker(this.VE[id]))
-                      result.push(id); 
-                }
-                else
-                    result.push(id);
+            if(this.isEdgeID(id)) {
+                if(!achecker || achecker(this.VE[id]))
+                      result.push(id);  
             } 
         }
         return result;
     }
+    
 
-     /**
-      * get the source of an edge 
+    /**
+     * get all edge entities satisfied by an checker.
+     * @param {function} achecker - an edge checker for vertex selection 
+     * @return a set of edges ids. 
+     */
+    this.getEdgeEntities = function(achecker) { 
+        return this.getEntities(this.getEdgeIDs(achecker));
+    }
+
+    /**
+      * get the source id of an edge 
       * @param {string} eid - the edge id. 
       * @return source id (indicating either one of a vertex or an edge). null if not available. 
       */
-    this.getEdgeSource = function(eid) {
+    this.getEdgeSourceID = function(eid) {
         return this.getEntityAttribute(eid, this.S_src); 
     }
-
-    ///**
-    // * set the source of an edge 
-    // * @param {string} eid - the edge id
-    // * @param {string} srcId - the source id which should be either one of id of a vertex or an edge 
-    // */
-    //this.setEdgeSource = function(eid, srcId) {
-    //    this.setEntityAttribute(eid, this.S_src, srcId);
-    //}
+    /**
+      * get the source entity of an edge 
+      * @param {string} eid - the edge id. 
+      * @return source entity (indicating either one of a vertex or an edge). null if not available. 
+      */
+    this.getEdgeSourceEntity = function(eid) {
+        return this.getEntity(this.getEdgeSourceID(eid)); 
+    }
+    
 
     /**
-      * get the destination of an edge 
-      * @param {string} edge - the edge id. 
+      * get the destination id of an edge 
+      * @param {string} eid - the edge id. 
       * @return destination id (indicating either one of a vertex or an edge). null if not available. 
       */
-    this.getEdgeDestination = function(eid) {
+    this.getEdgeDestinationID = function(eid) {
         return this.getEntityAttribute(eid, this.S_dst); 
     }
 
-     // /**
-    // * set the destination of an edge 
-    // * @param {string} eid - the edge id
-    // * @param {string} dstId - the destination id which should be either one of id of a vertex or an edge 
-    // */
-    // this.setEdgeDestination = function(eid, dstId) {
-        // this.setEntityAttribute(eid, this.S_dst, dstId);
-    // } 
+     /**
+      * get the destination entity of an edge 
+      * @param {string} eid - the edge id. 
+      * @return destination entity (indicating either one of a vertex or an edge). null if not available. 
+      */
+    this.getEdgeDestinationEntity = function(eid) {
+        return this.getEntity(this.getEdgeDestinationID(eid)); 
+    } 
 
     /**
      * get a list of incoming edge ids.
@@ -265,7 +318,7 @@ AG.AGraph = function(id_key, src_key, dst_key) {
      * @param echecker an edge checker. 
      * @return an array of incoming edge to to_v in terms of echecker. 
      */ 
-    this.inE = function(to_v, echecker) { 
+    this.getIncomingEdgeIDs = function(to_v, echecker) { 
         var result = []
         if (!(to_v in this.VE)) {   
             throw new Error(to_v + " is not a vertex!"); 
@@ -275,20 +328,28 @@ AG.AGraph = function(id_key, src_key, dst_key) {
             for (var ii=0; edge_ids && ii<edge_ids.length; ii++) {
                 var edge_id = edge_ids[ii];
                 var edge = this.VE[edge_id];
-                if (echecker == null || echecker(edge))
+                if (!echecker || echecker(edge))
                     result.push(edge_id);
             }
         }
         return result;
     } 
-
+ 	/**
+     * get a list of incoming edge entities.
+     * @param {string} to_v a vertex id to which edges are coming in. 
+     * @param echecker an edge checker. 
+     * @return an array of incoming edge entities to to_v in terms of echecker. 
+     */ 
+    this.getIncomingEdgeEntities = function(to_v, echecker) {  
+        return this.getEntities(this.getIncomingEdgeIDs(to_v, echecker));
+    } 
     /**
      * get a list of outgoing edge ids.
      * @param {string} from_v a vertex id from which edges are going from. 
      * @param echecker an edge checker. 
      * @return an array of outgoing edge from from_v in terms of echecker. 
      */ 
-    this.outE = function(from_v, echecker) { 
+    this.getOutgoingEdgeIDs = function(from_v, echecker) { 
         var result = [];
         if (!(from_v in this.VE ) ) {   
             throw new Error(from_v + " is not a vertex!"); 
@@ -298,115 +359,157 @@ AG.AGraph = function(id_key, src_key, dst_key) {
             for (var ii=0; edge_ids && ii<edge_ids.length; ii++) {
                 var edge_id = edge_ids[ii];
                 var edge = this.VE[edge_id];
-                if (echecker == null || echecker(edge))
+                if (!echecker || echecker(edge))
                     result.push(edge_id);
             }
         }
         return result;
     } 
-
+	/**
+     * get a list of outgoing edge entities.
+     * @param {string} from_v a vertex id from which edges are going from. 
+     * @param echecker an edge checker. 
+     * @return an array of outgoing edge entities from from_v in terms of echecker. 
+     */ 
+    this.getOutgoingEdgeEntities = function(from_v, echecker) { 
+    	return this.getEntities(getOutgoingEdgeIDs(from_v, echecker));
+    }
     /**
      * get all paths that have their final destination is to_v, and satisfy the optional condition echecker
      * @param to_v is the final destinations of all paths
      * @param echecker is an edge checker
-     * @return the set of paths(sequence of edges) in which the destination of the last edge is to_v
+     * @return the set of paths(sequence of edge ids) in which the destination of the last edge is to_v
      */
-    this.TinE = function(to_v, echecker) { 
+    this.getTIncomingEdgeIDs = function(to_v, echecker) { 
         let resultE =[];  
         let Visited = {} // map  
         let T = [to_v];  // test set 
         while(T.length>0)
         {
             var v = T[0]; T.shift();  Visited[v]=true;
-            var inE = this.inE(v,  echecker); // outE is an array  
-            for(var k in inE) {
-                var ieid = inE[k]; // an output edge id from from_v in terms of echecker 
+            var getIncomingEdgeIDs = this.getIncomingEdgeIDs(v,  echecker); // getOutgoingEdgeIDs is an array  
+            for(var k in getIncomingEdgeIDs) {
+                var ieid = getIncomingEdgeIDs[k]; // an output edge id from from_v in terms of echecker 
                 if(!Visited[ieid])
                     resultE.push(ieid);
                 Visited[ieid] = true;
-                var srcOfie = this.getEdgeSource(ieid); // the destination vertex of oeid 
+                var srcOfie = this.getEdgeSourceID(ieid); // the destination vertex of oeid 
                 if(!Visited[srcOfie])  // not visited yet 
                     T.push(srcOfie); //  
             }
         }  
         return resultE; 
     } 
-
+	/**
+     * get all paths that have their final destination is to_v, and satisfy the optional condition echecker
+     * @param to_v is the final destinations of all paths
+     * @param echecker is an edge checker
+     * @return the set of paths(sequence of edges) in which the destination of the last edge is to_v
+     */
+    this.getTIncomingEdgeEntities = function(to_v, echecker) { 
+    	return this.getEntities(this.getTIncomingEdgeIDs(o_v, echecker));
+    }
     /**
      * get all paths that have their origin is from_v, and satisfy the optional condition echecker
      * @param from_v is the origin of all paths
      * @param echecker is an edge checker
-     * @return the set of paths(sequence of edges) in which the source of the edge is from_v
+     * @return the set of paths(sequence of edge ids) in which the source of the edge is from_v
      */
-    this.ToutE = function(from_v, echecker) { 
+    this.getTOutgoingEdgeIDs = function(from_v, echecker) { 
         let resultE =[];  
         let Visited = {} // map  
         let T = [from_v];  // test set 
         while(T.length>0)
         {
             var v = T[0]; T.shift();  Visited[v]=true;
-            var outE = this.outE(v,  echecker); // outE is an array  
-            for(var k in outE) {
-                var oeid = outE[k]; // an output edge id from from_v in terms of echecker 
+            var getOutgoingEdgeIDs = this.getOutgoingEdgeIDs(v,  echecker); // getOutgoingEdgeIDs is an array  
+            for(var k in getOutgoingEdgeIDs) {
+                var oeid = getOutgoingEdgeIDs[k]; // an output edge id from from_v in terms of echecker 
                 if(!Visited[oeid])
                     resultE.push(oeid);
                 Visited[oeid] = true;
-                var dstOfie = this.getEdgeDestination(oeid); // the destination vertex of oeid 
+                var dstOfie = this.getEdgeDestinationID(oeid); // the destination vertex of oeid 
                 if(!Visited[dstOfie])  // not visited yet 
                     T.push(dstOfie); //  
             }
         }   
         return resultE;
     } 
+	 /**
+     * get all paths that have their origin is from_v, and satisfy the optional condition echecker
+     * @param from_v is the origin of all paths
+     * @param echecker is an edge checker
+     * @return the set of paths(sequence of edges) in which the source of the edge is from_v
+     */
+    this.getTOutgoingEdgeEntities = function(from_v, echecker) { 
+    	return this.getEntities(this.getTOutgoingEdgeIDs(from_v, echecker));
+    }
 
      /**
-     * get all source vertices that have their target as to_v, and satisfy the optional condition echecker
+     * get all source vertex ids that have their target as to_v, and satisfy the optional condition echecker
      * @param to_v
      * @param echecker
-     * @return
+     * @return the set of vertex ids
      */
-    this.inV = function(to_v, echecker) {
+    this.getIncomingVtxIDs = function(to_v, echecker) {
         var result = [];
-        var BE = this.inE(to_v, echecker); // 
+        var BE = this.getIncomingEdgeIDs(to_v, echecker); // 
         for (var ii in BE) {
             var beid = BE[ii];
-            var src_id = this.getEdgeSource(beid);
+            var src_id = this.getEdgeSourceID(beid);
             if (src_id)
                 result.push(src_id);
         }
         return result;
     }
-
+ 	/**
+     * get all source vertices that have their target as to_v, and satisfy the optional condition echecker
+     * @param to_v
+     * @param echecker
+     * @return the set of vertex entities
+     */
+    this.getIncomingVtxEntities = function(to_v, echecker) {
+    	return this.getEntities(this.getIncomingVtxIDs(to_v, echecker));
+    }
     /**
      * get all destination vertices that have their target as from_v, and satisfy the optional condition echecker
      * @param from_v
      * @param echecker
-     * @return
+     * @return the set of vertex ids
      */
-    this.outV = function(from_v, echecker) {
+    this.getOutgoingVtxIDs = function(from_v, echecker) {
         var result = [];
-        var FE = this.outE(from_v, echecker); // 
+        var FE = this.getOutgoingEdgeIDs(from_v, echecker); // 
         for (var ii in FE) {
             var feid = FE[ii];
-            var dst_id = this.getEdgeDestination(feid);
+            var dst_id = this.getEdgeDestinationID(feid);
             if (dst_id)
                 result.push(dst_id);
         }
         return result;
     }
+     /**
+     * get all destination vertices that have their target as from_v, and satisfy the optional condition echecker
+     * @param from_v
+     * @param echecker
+     * @return the set of vertex entities
+     */
+    this.getOutgoingVtxEntities = function(from_v, echecker) {
+    	return this.getEntities(this.getOutgoingVtxIDs(from_v, echecker));
+    }
     /**
-     * get all transitive inputting vertices of a vertex vtx in terms of edge type
+     * get all transitive inputting vertex ids of a vertex vtx in terms of edge type
      * @param vtx is a vertex
      * @param edgetype is the edge type
-     * @return all transitive inputting vertices (always non null).
+     * @return all transitive inputting vertex ids (always non null).
      */
-    this.TinV = function(vtx, echecker) {
+    this.getTIncomingVtxIDs = function(vtx, echecker) {
         var answer = [];
         var T = [vtx];  
         var Visited ={}; // map. 
         while(T.length>0) {
             var v = T[0]; T.shift();  Visited[v]=true;
-            var iV = this.inV(v, echecker); // inV 
+            var iV = this.getIncomingVtxIDs(v, echecker); // getIncomingVtxIDs 
             for(var ii in iV) { 
                 var v = iV[ii];
                 answer.push(v);
@@ -416,19 +519,28 @@ AG.AGraph = function(id_key, src_key, dst_key) {
         }// while 
         return answer;
     }
-    /**
-     * get all transitive outputting vertices of a vertex vtx in terms of edge type
+     /**
+     * get all transitive inputting vertex ids of a vertex vtx in terms of edge type
      * @param vtx is a vertex
      * @param edgetype is the edge type
-     * @return all transitive outputting vertices (always non null).
+     * @return all transitive inputting vertex ids (always non null).
      */
-    this.ToutV = function(vtx, echecker) {
+    this.getTIncomingVtxEntities = function(vtx, echecker) {
+    	return this.getEntities(this.getTIncomingVtxIDs(vtx, echecker));
+    }
+    /**
+     * get all transitive outputting vertex ids of a vertex vtx in terms of edge type
+     * @param vtx is a vertex
+     * @param edgetype is the edge type
+     * @return all transitive outputting vertex ids (always non null).
+     */
+    this.getTOutgoingVtxIDs = function(vtx, echecker) {
         var answer = [];
         var T = [vtx];  
         var Visited ={}; // map. 
         while(T.length>0) {
             var v = T[0]; T.shift();  Visited[v]=true;
-            var oV = this.outV(v, echecker); // inV 
+            var oV = this.getOutgoingVtxIDs(v, echecker); // getIncomingVtxIDs 
             for(var ii in oV) { 
                 var v = oV[ii];
                 answer.push(v);
@@ -438,6 +550,16 @@ AG.AGraph = function(id_key, src_key, dst_key) {
         }// while 
         return answer;
     }
+     /**
+     * get all transitive outputting vertex entities of a vertex vtx in terms of edge type
+     * @param vtx is a vertex
+     * @param edgetype is the edge type
+     * @return all transitive outputting vertex entities (always non null).
+     */
+    this.getTOutgoingVtxEntities = function(vtx, echecker) {
+    	return this.getEntities(this.getTOutgoingVtxIDs(vtx, echecker));
+    }
+
     this.entityToString = function(entity) { 
         var answer = "";
         var i=0;
@@ -481,15 +603,15 @@ if (typeof window === 'undefined') {
         g.addEdge("2-4","2","4",{type:"a"});   
         //g.addEdge("3-2","3","3",{type:"da"});   
 
-        console.log("* outV(1)="+JSON.stringify(g.outV("1")));
-        console.log("* outE(1)="+JSON.stringify(g.outE("1")));
-        console.log("* ToutE(1)="+JSON.stringify(g.ToutE("1")));
-        console.log("* inV(3)="+JSON.stringify(g.inV("3")));
-        console.log("* inE(3)="+JSON.stringify(g.inE("3")));
-        console.log("* TinE(3)="+JSON.stringify(g.TinE("3")));
-        console.log("* inV(4)="+JSON.stringify(g.inV("4")));
-        console.log("* inE(4)="+JSON.stringify(g.inE("4")));
-        console.log("* TinE(4)="+JSON.stringify(g.TinE("4")));
+        console.log("* getOutgoingVtxIDs(1)="+JSON.stringify(g.getOutgoingVtxIDs("1")));
+        console.log("* getOutgoingEdgeIDs(1)="+JSON.stringify(g.getOutgoingEdgeIDs("1")));
+        console.log("* getTOutgoingEdgeIDs(1)="+JSON.stringify(g.getTOutgoingEdgeIDs("1")));
+        console.log("* getIncomingVtxIDs(3)="+JSON.stringify(g.getIncomingVtxIDs("3")));
+        console.log("* getIncomingEdgeIDs(3)="+JSON.stringify(g.getIncomingEdgeIDs("3")));
+        console.log("* getTIncomingEdgeIDs(3)="+JSON.stringify(g.getTIncomingEdgeIDs("3")));
+        console.log("* getIncomingVtxIDs(4)="+JSON.stringify(g.getIncomingVtxIDs("4")));
+        console.log("* getIncomingEdgeIDs(4)="+JSON.stringify(g.getIncomingEdgeIDs("4")));
+        console.log("* getTIncomingEdgeIDs(4)="+JSON.stringify(g.getTIncomingEdgeIDs("4")));
     }
 } else {
     // in browser 
