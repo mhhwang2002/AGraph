@@ -24,6 +24,17 @@ AG.AGraph = function(id_key, src_key, dst_key) {
     this.FE={}; // FE[src]={eid}: forward edges starting from src s.t. E[eid].S_src = src for eid in FE[src] ;
     this.BE={}; // BE[dst]={eid}: backward edges ending to dst s.t. E[eid].S_dst = dst for eid in BE[dst] ;  
     
+     /**
+     * get the id of an entity if the entity belongs to this graph.  
+     * @param ent  - entity 
+     * @return ent[this.S_id] if this.S_id in ent; null otherwise. 
+    */
+    this.ID = function(ent) {
+        if (ent && this.S_id in ent && ent[this.S_id] in this.VE)
+            return ent[this.S_id];
+        else
+            return null;
+    }
     /**
      * check if an id is a vertex id 
      * @param id  - identifier
@@ -34,7 +45,7 @@ AG.AGraph = function(id_key, src_key, dst_key) {
         if(ent) 
             return !((this.S_src in ent) && (this.S_dst in ent));
         else
-            throw new Error(id + " doesn't exists.");
+            throw new Error(id + " is not an entity of this graph.");
     }
     /**
      * check if an entity is a vertex in VE
@@ -42,10 +53,10 @@ AG.AGraph = function(id_key, src_key, dst_key) {
      * @return {boolean} true if the input is a vertex; false otherwise.
     */
     this.isVtxEntity = function(ent) { 
-        if(this.S_id in ent && ent[S_id] in this.VE) 
+        if(ent && this.S_id in ent && ent[this.S_id] in this.VE) 
             return !((this.S_src in ent) && (this.S_dst in ent));
         else
-            throw new Error(ent + " doesn't exists.");
+            throw new Error(ent + " is not an entity of this graph.");
     }
     
     /**
