@@ -45,11 +45,7 @@ AG.AGraph = function(id_key, src_key, dst_key) {
      * @return  input if input in VE, or VE[input[S_id]] if input[S_id] is registered. 
      */
     this.getEntity= function(input) {
-        let id = null;
-        if(input in this.VE) // input is an id
-            id = input; 
-        else if (this.S_id in input && input[this.S_id] in this.VE) // input is an entity 
-            id = input[this.S_id];
+        let id = this.ID(input);
         
         if(id)
             return this.VE[id];
@@ -62,7 +58,7 @@ AG.AGraph = function(id_key, src_key, dst_key) {
      * @return {boolean} true if the input is a vertex; false otherwise.
     */
     this.isVtx = function(input) { 
-        let ent = this.getEntity(this.ID(input));
+        let ent = this.getEntity(input);
         if(ent) 
             return !((this.S_src in ent) && (this.S_dst in ent));
         else
@@ -111,8 +107,9 @@ AG.AGraph = function(id_key, src_key, dst_key) {
     this.getEntitiesByChecker = function(achecker) { 
         let entities = [];
         for (let id in this.VE) {
-        	if(!achecker || achecker(this.getEntity(id))) {
-        		entities.push(this.getEntitiy(id));
+            let ent = this.VE[id];
+        	if(!achecker || achecker(ent)) {
+        		entities.push(ent);
         	} 
         }
         return entities;
@@ -200,8 +197,9 @@ AG.AGraph = function(id_key, src_key, dst_key) {
         let result = [];
         for(id in this.VE) { 
             if(this.isVtx(id)) {
-                if(!achecker || achecker(this.VE[id]))
-                	result.push(id);  
+                let vtx = this.VE[id];
+                if(!achecker || achecker(vtx))
+                	result.push(vtx);  
             } 
         }
         return result;
@@ -219,15 +217,17 @@ AG.AGraph = function(id_key, src_key, dst_key) {
     /**
      * add an edge.
      * @param id - an unique identifier (key) for the edge. 
-     * @param src_id - a source id that can be for a vertex or an edge. 
-     * @param  dst_id - a destination id that can be for a vertex or an edge. 
+     * @param src - a source that can be either one of id or entity for a vertex or an edge. 
+     * @param dst - a destination that can be either one of id or entity for a vertex or an edge. 
      * @param {Object} attrs attributes of adding vertex. 
      * @throws Exception if src_id or dst_id doesn't exists in V or E. 
      * @return the edge attributes which contain attributes: S_id:id, S_dst:dst_id and S_src:src_id.
      */
-    this.addEdge = function(id, src_id, dst_id, attrs) {
+    this.addEdge = function(id, src, dst, attrs) {
         if (id in this.VE)
             throw new Error("Edge "+id+" is already registered.");
+        let src_id = this.ID(src);
+        let dst_id = this.ID(dst);
         if ( !(src_id in this.VE ) )
             throw new Error("source "+src_id+" is not registered.");
         if ( !(dst_id in this.VE) )
@@ -352,8 +352,8 @@ AG.AGraph = function(id_key, src_key, dst_key) {
         let result = [];
         let BE = this.getIncomingEdges(to_entity, echecker); // 
         for (let ii in BE) {
-            let beid = BE[ii];
-            let src = this.getEdgeSource(beid);
+            let be = BE[ii];
+            let src = this.getEdgeSource(be);
             if (src)
                 result.push(src);
         }
@@ -370,8 +370,8 @@ AG.AGraph = function(id_key, src_key, dst_key) {
         let result = [];
         let FE = this.getOutgoingEdges(from_entity, echecker); // 
         for (let ii in FE) {
-            let feid = FE[ii];
-            let dst= this.getEdgeDestination(feid);
+            let fe = FE[ii];
+            let dst= this.getEdgeDestination(fe);
             if (dst)
                 result.push(dst);
         }
