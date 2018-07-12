@@ -5,7 +5,7 @@ describe('Test1', function(){
 	console.log("Test1 Struccture: 1->2->3");
     console.log("                     |   ");
     console.log("                     +->4");
-	var g = new AG.AGraph(id_key="__id_", src_key="_src_", dst_key="_dst_");
+	let g = new AG.AGraph(id_key="_id_", src_key="_src_", dst_key="_dst_");
         
     g.addVtx("1",{name:"one"});
     g.addVtx("2",{name:"two"});

@@ -1,5 +1,6 @@
 <html> 
     <head>
+        <script type="text/javascript" src="require.js"></script> 
         <script type="text/javascript" src="../AGraph.js"></script> 
     </head>
 <body> 
@@ -25,6 +26,16 @@
         let str = JSON.stringify(g);
         console.log(str);
         document.getElementById("text").innerHTML = str;
+
+        var fs = require('fs'); 
+        console.log("writeGraphToFile=\n"+str)
+        fs.writeFileSync("graph.json", str);
+ /*
+        var gdst = new AG.AGraph();
+        AG.readGraphFromFile(gdst, "graph.json");
+        let dststr = JSON.stringify(gdst);
+        console.log(dststr);
+        */
     </script>
 </body>
 </html>

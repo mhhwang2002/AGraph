@@ -398,8 +398,27 @@ AG.AGraph = function(id_key, src_key, dst_key) {
     }
 } // end of AG.Graph 
 
-if(typeof module != 'undefined')
-    module.exports.AGraph = AG.AGraph; //   
+ 
+
+if(typeof module != 'undefined') {
+    var fs = require('fs');
+
+    AG.writeGraphToFile = function(g, filepath, custom_stringify) {
+        let str = JSON.stringify(g, custom_stringify);
+        console.log("writeGraphToFile=\n"+str)
+        fs.writeFileSync(filepath, str);
+    }
+
+    AG.readGraphFromFile= function(filepath, g, custom_parse) {
+        let data = fs.readFileSync(filepath); 
+        console.log("readGraphFromFile=\n"+data);
+        let obj=JSON.parse(data, custom_parse);  
+
+        g = Object.assign(g, obj); 
+    }
+
+    module.exports = {AGraph:AG.AGraph, writeGraphToFile:AG.writeGraphToFile, readGraphFromFile:AG.readGraphFromFile}
+}
 
 if (typeof window === 'undefined') {
     if (require.main === module) {// runing this file using node.js  
@@ -410,7 +429,7 @@ if (typeof window === 'undefined') {
         console.log("Graph Struccture: 1->2->3");
         console.log("                     |   ");
         console.log("                     +->4");
-        var g = new AG.AGraph(id_key="__id_", src_key="_src_", dst_key="_dst_");
+        var g = new AG.AGraph(id_key="_id_", src_key="_src_", dst_key="_dst_");
         
         g.addVtx("1",{name:"one"});
         g.addVtx("2",{name:"two"});
